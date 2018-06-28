@@ -1,0 +1,12 @@
+[Unit]
+Description=Prometheus statsd-exporter in Docker
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStart=/usr/bin/docker start -a {{ statsd_exporter_service_name }}
+ExecStop=/usr/bin/docker stop -t 15 {{ statsd_exporter_service_name }}
+
+[Install]
+WantedBy=multi-user.target

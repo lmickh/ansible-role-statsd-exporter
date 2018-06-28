@@ -1,0 +1,38 @@
+---
+- name: Create statsd-exporter container
+  become: true
+  docker_container:
+    name: "{{ statsd_exporter_service_name }}"
+    command: "{{ statsd_exporter_args }}"
+    detach: true
+    image: "{{ statsd_exporter_image }}"
+    network_mode: host
+    ports:
+      - "9102:9102"
+      - "9125:9125/udp"
+    state: present
+  register: statsd_exporter_service_config
+
+- name: Create statsd-exporter service file
+  become: true
+  template:
+    dest: "/etc/systemd/system/{{ statsd_exporter_service_name }}.service"
+    src: "templates/statsd-exporter.service.j2"
+    mode: 0664
+  register: statsd_exporter_service_config
+  when: ansible_service_mgr == 'systemd'
+
+- name: Restart statsd-exporter service
+  become: true
+  systemd:
+    name: "{{ statsd_exporter_service_name }}.service"
+    daemon_reload: yes
+    state: restarted
+  when: statsd_exporter_service_config.changed
+
+- name: Enable statsd-exporter service
+  become: true
+  service:
+    name: "{{ statsd_exporter_service_name }}.service"
+    state: started
+    enabled: yes
